@@ -4,7 +4,7 @@ extends CharacterBody2D
 @onready var jump_sound: AudioStreamPlayer2D = $JumpSound
 @onready var death_sound: AudioStreamPlayer2D = $DeathSound
 @onready var unlock: Node2D = $Unlock
-@onready var dash_cool: Timer = $"Dash Cooldown"
+@onready var dash_cool: Timer = $"Signals/Dash Cooldown"
 
 #states
 var player_dead = false
@@ -13,8 +13,8 @@ var player_dead = false
 const SPEED := 450.0
 
 #gravity variables
-const GRAVITY := 1500
-const FALL_GRAVITY := 1500
+var GRAVITY := 1500
+var FALL_GRAVITY := 1500
 
 #jump variables
 var JUMP_VELOCITY := -900
@@ -78,6 +78,8 @@ func _physics_process(delta: float) -> void:
 		jump_sound.play()
 		velocity.y = JUMP_VELOCITY
 	elif !is_on_floor() and is_on_wall() and Input.is_action_pressed("right") and has_unlocked_wall:
+		GRAVITY = 800
+		FALL_GRAVITY = 800
 		animated_sprite_2d.flip_h = false
 		animated_sprite_2d.animation = "WallJump"
 		velocity.x = -WALL_JUMP_PUSHBACK
@@ -91,6 +93,8 @@ func _physics_process(delta: float) -> void:
 			velocity.y = JUMP_VELOCITY / 4
 			jump_amount += 1
 	elif !is_on_floor() and is_on_wall() and Input.is_action_pressed("left") and has_unlocked_wall:
+		GRAVITY = 800
+		FALL_GRAVITY = 800
 		animated_sprite_2d.flip_h = true
 		animated_sprite_2d.animation = "WallJump"
 		velocity.x = WALL_JUMP_PUSHBACK
@@ -101,6 +105,9 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_released("jump") and velocity.y < 0:
 			jump_sound.play()
 			velocity.y = JUMP_VELOCITY / 4
+		else:
+			GRAVITY = 1500
+			FALL_GRAVITY = 1500
 	
 	elif Input.is_action_just_released("jump") and velocity.y < 0:
 		velocity.y = JUMP_VELOCITY / 4
@@ -122,7 +129,7 @@ func _physics_process(delta: float) -> void:
 		animated_sprite_2d.animation = "Dashing" 
 		can_dash = false
 		dashing = true
-		$"Dash Timer".start()
+		$"Signals/Dash Timer".start()
 		dash_cool.start()
 
 	# Get the input direction and handle the movement/deceleration.
@@ -153,4 +160,5 @@ func _on_dash_timer_timeout() -> void:
 
 
 func _on_dash_cooldown_timeout() -> void:
-	can_dash = true
+	if is_on_floor():
+		can_dash = true
